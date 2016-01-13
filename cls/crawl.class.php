@@ -6,8 +6,11 @@
      */
     class crawlCls{
         
+        public static $key = 'default';//搜索关键词
+        
         //根据关键词抓取分析页面
-        public function search($key){
+        public static function search($key){
+            self::$key = $key;
             httpCls::set('host', crawlConf::$host);
             httpCls::set('uri', crawlConf::$search.'?word='.urlencode($key).'&ssid=&lc=&from=&bd_page_type=&uid=&pu=&st=&wk=');
             httpCls::set('agent', crawlConf::$browser[0]['agent']);
@@ -30,7 +33,7 @@
         }
         
         //*查询详情页面
-        public function view($id){
+        public static function view($id){
             httpCls::set('host', crawlConf::$host);
             httpCls::set('uri', $id);
             httpCls::set('agent', crawlConf::$browser[0]['agent']);
@@ -39,16 +42,17 @@
             $rs = httpCls::send();
             //返回内容
             self::log('header',httpCls::$request);
-            
-            $content = $rs?httpCls::$response:'';
+            $content = $rs?httpCls::$response:false;
             return $content;
         }
         
         //Doc文件解析
         public static function doc($content){
             $doc = new docCls($content);
-            $content = $doc->title();
-            return $content;
+            $doc->set('title', $doc->title());
+            $doc->set('author', $doc->author());
+            $doc->set('content', $doc->content());
+            return $doc->data;
         }
         
         //PDF文件解析
@@ -71,6 +75,11 @@
             return file_put_contents(ROOT.'log'.DIRECTORY_SEPARATOR.$type.'.log', date('Y-m-d H:i:s').PHP_EOL.$content.PHP_EOL);
         }
         
-        
+        //保存文件
+        public static function save($data){
+            $path = ROOT.'data'.DIRECTORY_SEPARATOR.self::$key;
+            if(!file_exists($path)) mkdir ($path);
+            return file_put_contents(ROOT.'data'.DIRECTORY_SEPARATOR.self::$key.DIRECTORY_SEPARATOR.$data['title'].'.md', $data['content']);
+        }
     }
 

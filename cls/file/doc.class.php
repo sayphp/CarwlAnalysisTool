@@ -9,10 +9,30 @@
         //获取标题
         public function title(){
             $preg = "/\<h1\>(.*)\<\/h1\>/";
-            var_dump($this->content);
+            preg_match($preg, $this->content, $matches);
+            return $matches[1];
+        }
+        
+        //获取作者
+        public function author(){
+            $preg = "/\<p class\=\"uploader\"\>(.*?)\<\/p\>/i";
+            preg_match($preg, $this->content, $matches);
+            return $matches[1];
+        }
+        
+        //获取内容
+        public function content(){
+            $preg = "/\<p\ class=\"txt\">([\w\W]*?)\<\/p\>/i";
             preg_match_all($preg, $this->content, $matches);
-            var_dump($matches);
-            return $matches;
+//            var_dump($this->content);
+//            var_dump($matches);
+            $content = '';
+            if($matches[1]){
+                foreach($matches[1] as $v){
+                    if(trim($v)!='') $content .= $v."\r\n\r\n";
+                }
+            }
+            return $content;
         }
         
         //是否继续
