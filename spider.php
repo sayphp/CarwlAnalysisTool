@@ -14,20 +14,20 @@
         switch($type){//根据类型分析内容
             case 'doc':
                 $data = crawlCls::doc($id);
-                var_dump($data);
                 crawlCls::save($data);
-                break 2;
+                break;
             case 'pdf':
-                crawlCls::pdf($id);
+//                crawlCls::pdf($id);
 //                break;
             case 'ppt':
-                crawlCls::ppt($id);
+//                crawlCls::ppt($id);
 //                break;
             case 'txt':
-                crawlCls::txt($id);
+//                crawlCls::txt($id);
 //                break;
             default:
                 crawlCls::log('type', $type.'的文件不可解析');
         } 
     }
+    echo '抓取完成';
 

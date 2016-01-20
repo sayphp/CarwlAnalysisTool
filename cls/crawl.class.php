@@ -81,7 +81,34 @@
         public static function save($data){
             $path = ROOT.'data'.DIRECTORY_SEPARATOR.self::$key;
             if(!file_exists($path)) mkdir ($path);
-            return file_put_contents(ROOT.'data'.DIRECTORY_SEPARATOR.self::$key.DIRECTORY_SEPARATOR.$data['title'].'.md', $data['content']);
+            $file = $path.DIRECTORY_SEPARATOR.$data['title'].'.md';
+            $repeat = self::repeat($file, $data);
+            if($repeat==0){
+                self::md5($data['content']);
+                return file_put_contents($file, $data['content']);
+            }elseif($repeat==1){
+                self::md5($data['content']);
+                return file_put_contents($path.DIRECTORY_SEPARATOR.$data['title'].date('YmdHis').'.md', $data['content']);
+            }else{
+                self::log('repeat', $file.'文件重复');
+                return true;
+            }
+        }
+        
+        //检查文件是否重复存在，内容是否一致
+        public static function repeat($file, $data){
+            if(file_exists($file)){
+                $content = file_get_contents(ROOT.'data'.DIRECTORY_SEPARATOR.'md5.md');
+                $list = explode("\r\n", $content);
+                if(in_array(md5($data['content']),$list)) return 1;//同文件
+                return 2;//同名
+            }
+            return 0;//不重复
+        }
+        
+        //md5记录
+        public static function md5($content=''){
+            return file_put_contents(ROOT.'data'.DIRECTORY_SEPARATOR.'md5.md', md5($content).PHP_EOL, FILE_APPEND);
         }
     }
 
