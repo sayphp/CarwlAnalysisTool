@@ -14,6 +14,8 @@
         
         public static $cookie = '';//Cookie
         
+        public static $referer = '';//来源
+        
         public static $length = 0;//请求长度
         
         public static $timeout = 10;//超时时长
@@ -45,22 +47,24 @@
         
         //发送请求
         public static function send(){
+            //分片传输BUG处理，3种方式：1.正则、2.16进制 3.改用HTTP 1.0
             if(self::$host){
                 $fp = fsockopen(self::$host, self::$port, self::$errno, self::$errstr, self::$timeout);
-                self::$request = self::method(self::$method)." ".self::$uri." HTTP/1.1\r\n";//请求方式 资源 协议
+                self::$request = self::method(self::$method)." ".self::$uri." HTTP/1.0\r\n";//请求方式 资源 协议
                 self::$request .= "Host: ".self::$host."\r\n";//服务器
                 self::$request .= "User-agent:".self::$agent."\r\n";//客户端
                 foreach(self::$accept as $k => $v){
                     self::$request .= self::accept($k, $v)."\r\n";
                 }
                 if(self::$cookie!=''){
-                    self::$cookie .= self::$cookie."\r\n";
+                    self::$request .= "Cookie: ".self::$cookie."\r\n";
                 }
                 //POST的情况下
                 $post = self::$body."\r\n";
                 if(self::$method==2){
                     self::$request .= "Content-Length: ".strlen($post)."\r\n";
                 }
+                self::$request .= "Referer: http://".self::$host.self::$uri."\r\n";
                 self::$request .= "Connection: keep-alive\r\n";
                 self::$request .= "\r\n";
                 if(self::$method==2){
@@ -70,11 +74,9 @@
                     fwrite($fp, self::$request);//写入内容
                     $str = '';
                     while(!feof($fp)){
-                        $str = stream_get_line($fp, 1024, "\r\n");
-                        self::$response .= trim($str);
-                        if(strstr($str, "</html>")){
-                            break;
-                        }
+                        //$str = stream_get_line($fp, 1024, "\r\n");
+                        $str = fgets($fp, 1024);
+                        self::$response .= $str;
                     }
                     fclose($fp);
                     return true;
@@ -84,6 +86,47 @@
             return false;
         }
         
+        //下载请求
+        public static function down(){
+            if(self::$host){
+                $fp = fsockopen(self::$host, self::$port, self::$errno, self::$errstr, self::$timeout);
+                self::$request = self::method(self::$method)." ".self::$uri." HTTP/1.0\r\n";//请求方式 资源 协议
+                self::$request .= "Host: ".self::$host."\r\n";//服务器
+                self::$request .= "User-agent:".self::$agent."\r\n";//客户端
+                foreach(self::$accept as $k => $v){
+                    self::$request .= self::accept($k, $v)."\r\n";
+                }
+                if(self::$cookie!=''){
+                    self::$request .= "Cookie: ".self::$cookie."\r\n";
+                }
+                //POST的情况下
+                $post = self::$body."\r\n";
+                if(self::$method==2){
+                    self::$request .= "Content-Length: ".strlen($post)."\r\n";
+                }
+                self::$request .= "Referer: http://".self::$host.self::$uri."\r\n";
+                self::$request .= "Connection: close\r\n";
+                self::$request .= "\r\n";
+                if(self::$method==2){
+                    self::$request .= $post;
+                }
+                echo '下载图片'.PHP_EOL;
+                if($fp){
+//                    $fi = fopen(ROOT.'img/'.time().'.png', 'w');
+                    fwrite($fp, self::$request);//写入内容
+                    $str = '';
+                    while(!feof($fp)){
+                        $str = fgets($fp, 1024);
+//                        echo $str;
+                        self::$response .= $str;
+                    }
+//                    fclose($fi);
+                    fclose($fp);
+                    return true;
+                }
+            }
+            return false;
+        }
         //获取请求方法
         public static function method($type=1){
             switch($type){

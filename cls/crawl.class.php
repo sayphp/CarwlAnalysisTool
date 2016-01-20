@@ -8,6 +8,8 @@
         
         public static $key = 'default';//搜索关键词
         
+        public static $id;//资源地址
+        
         //根据关键词抓取分析页面
         public static function search($key){
             self::$key = $key;
@@ -34,6 +36,7 @@
         
         //*查询详情页面
         public static function view($id){
+            httpCls::$response = false;
             httpCls::set('host', crawlConf::$host);
             httpCls::set('uri', $id);
             httpCls::set('agent', crawlConf::$browser[0]['agent']);
@@ -41,17 +44,16 @@
             httpCls::set('cookie', crawlConf::$browser[0]['cookie']);
             $rs = httpCls::send();
             //返回内容
-            self::log('header',httpCls::$request);
-            $content = $rs?httpCls::$response:false;
-            return $content;
+            //httpCls::$response = (httpCls::unchunk2preg(httpCls::$response));
+            return httpCls::$response;
         }
         
         //Doc文件解析
-        public static function doc($content){
-            $doc = new docCls($content);
-            $doc->set('title', $doc->title());
-            $doc->set('author', $doc->author());
-            $doc->set('content', $doc->content());
+        public static function doc($id){
+            $doc = new docCls($id);
+            $content = $doc->content($id);
+            $content = $doc->filter($content);
+            $doc->set('content', $content);
             return $doc->data;
         }
         
@@ -72,7 +74,7 @@
         
         //日志
         public static function log($type='default', $content=''){
-            return file_put_contents(ROOT.'log'.DIRECTORY_SEPARATOR.$type.'.log', date('Y-m-d H:i:s').PHP_EOL.$content.PHP_EOL);
+            return file_put_contents(ROOT.'log'.DIRECTORY_SEPARATOR.$type.'.log', date('Y-m-d H:i:s').PHP_EOL.$content.PHP_EOL, FILE_APPEND);
         }
         
         //保存文件
