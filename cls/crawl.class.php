@@ -11,10 +11,12 @@
         public static $id;//资源地址
         
         //根据关键词抓取分析页面
-        public static function search($key){
+        public static function search($key, $next=1){
+            echo '抓取页面'.PHP_EOL;
             self::$key = $key;
+            httpCls::$response = '';
             httpCls::set('host', crawlConf::$host);
-            httpCls::set('uri', crawlConf::$search.'?word='.urlencode($key).'&ssid=&lc=&from=&bd_page_type=&uid=&pu=&st=&wk=');
+            httpCls::set('uri', crawlConf::$search.'?word='.urlencode($key).'&pn='.$next.'&ssid=&lc=&from=&bd_page_type=&uid=&pu=&st=&wk=');
             httpCls::set('agent', crawlConf::$browser[0]['agent']);
             httpCls::set('accept', crawlConf::$browser[0]['accept']);
             httpCls::set('cookie', crawlConf::$browser[0]['cookie']);
@@ -25,13 +27,28 @@
 //            var_dump($content);
             $preg = "/\<p\><a href=\"(.*)?\?ssid\=(.*)?\"\>.*?\.(\w*?)\<\/a\>/i";
             preg_match_all($preg, $content, $matches);
-            $data = false;
+            $data = array();
             if($matches){
                 foreach($matches[1] as $k => $id){
                     $data[$id] = $matches[3][$k];
                 }
             }
+            self::log('data', var_export($data,1));
+            $next = self::next($content);
+            if($next){
+                $data = array_merge($data, self::search($key, $next));
+            }
             return $data;
+        }
+        
+        //是否下一页
+        public static function next($content){
+            $preg = "/\<td align\=\"right\"\>\s*?第(\d*?)\/(\d*?)页/i";
+            preg_match($preg, $content, $match);
+            if($match){
+                if($match[1]<$match[2]) return intval($match[1])+1;
+            }
+            return false;
         }
         
         //*查询详情页面

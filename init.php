@@ -1,6 +1,6 @@
 <?php
     //载入文件
-    ini_set('memory_limit', '128M');
+    ini_set('memory_limit', '1024M');
     
     $conf = array(
         ROOT.'conf'.DIRECTORY_SEPARATOR.'*\.conf\.php',

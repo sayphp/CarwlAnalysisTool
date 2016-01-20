@@ -8,8 +8,9 @@
     define('ROOT', dirname(__FILE__).DIRECTORY_SEPARATOR);
     require ROOT.'init.php';
     
-    $key = '语文';//抓取的分词
+    $key = '高考数学';//抓取的分词
     $list = crawlCls::search($key);
+    echo count($list).PHP_EOL;
     foreach($list as $id => $type){
         switch($type){//根据类型分析内容
             case 'doc':
